@@ -4,22 +4,6 @@
     "source.fixAll.eslint": "explicit"
   },
   "files.exclude": {
-    "node_modules": false,
-    ".vscode": false,
-    ".gitignore": false,
-    "package.json": false,
-    "package-lock.json": false,
-    ".eslintrc*": false,
-    "tsconfig.*": true,
-    "next-env.d.ts": true,
-    "next.config.mjs": false,
-    "README.md": true,
-    "prettier.config.js": true,
-    "postcss.config.js": true,
-    ".prettierrc": true,
-    ".gitattributes": true,
-    ".eslintrc.json": true,
-    "postcss.config.mjs":true,
-    ".editorconfig": true,
+ 
   },
 }
