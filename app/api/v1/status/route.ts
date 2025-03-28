@@ -1,5 +1,4 @@
 import { database } from "@/infra/database"
-import { NextApiResponse } from "next"
 
 interface DatabseVersionResult {
   server_version: string
@@ -13,7 +12,7 @@ interface CountResult {
   count: number
 }
 
-export async function GET(request: NextApiResponse, response: NextApiResponse) {
+export async function GET() {
   const databaseVersion = await database.$queryRaw<
     DatabseVersionResult[]
   >`SHOW server_version`
