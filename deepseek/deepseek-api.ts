@@ -16,12 +16,12 @@ type CategorizarDespesaResponse = {
 export async function categorizarDespesa(
   originalMessage: string,
 ): Promise<CategorizarDespesaResponse> {
-  console.log("originalMessage", originalMessage)
-  const completion = await openai.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content: `
+  try {
+    const completion = await openai.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: `
         Você é uma IA que classifica despesas informadas pelo usuário.
         Para cada mensagem do usuário, identifique:
         - a categoria da despesa (ex: alimento, transporte, entretenimento, moradia, outros)
@@ -35,24 +35,18 @@ export async function categorizarDespesa(
           "valor": ...
         }
         `,
-      },
-      { role: "user", content: String(originalMessage) },
-    ],
-    model: "deepseek-chat",
-  })
+        },
+        { role: "user", content: String(originalMessage) },
+      ],
+      model: "deepseek-chat",
+    })
 
-  const respostaIA = completion.choices[0].message.content
+    const respostaIA = completion.choices[0].message.content
 
-  const jsonData = JSON.parse(respostaIA.replace(/```json|```/g, "").trim())
+    const jsonData = JSON.parse(respostaIA!.replace(/```json|```/g, "").trim())
 
-  console.log("respostaIA", respostaIA)
-
-  console.log("respostaIA", jsonData)
-
-  try {
     return { ...jsonData, originalMessage }
   } catch (e) {
-    console.error("Resposta inválida da IA:", respostaIA)
     throw e
   }
 }

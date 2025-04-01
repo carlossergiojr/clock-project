@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { categorizarDespesa } from "@/deepseek/deepseek-api"
 import { database } from "@/infra/database"
 import { PrismaClient } from "@prisma/client"
@@ -14,9 +15,7 @@ interface CountResult {
   count: number
 }
 
-export async function GET(req: Request, res) {
-  console.log("req here", req.body)
-  console.log("res here", res)
+export async function GET() {
   const databaseVersion = await database.$queryRaw<
     DatabseVersionResult[]
   >`SHOW server_version`
@@ -56,11 +55,11 @@ export async function GET(req: Request, res) {
   )
 }
 
-export async function POST(req: Request, res) {
+export async function POST(req: Request) {
   const formData = await req.formData()
-  const messageSid = formData.get("MessageSid")
+  // const messageSid = formData.get("MessageSid")
   const from: any = formData.get("From")
-  const to = formData.get("To")
+  // const to = formData.get("To")
   const bodyValue = formData.get("Body")
 
   const prisma = new PrismaClient()
@@ -111,7 +110,7 @@ export async function POST(req: Request, res) {
       })
     }
 
-    const transaction = await prisma.transaction.create({
+    await prisma.transaction.create({
       data: {
         description: despeza.descricao,
         amount: despeza.valor,

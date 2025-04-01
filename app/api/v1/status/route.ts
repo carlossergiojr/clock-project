@@ -12,9 +12,8 @@ interface CountResult {
   count: number
 }
 
-export async function GET(req: Request, res) {
+export async function GET(req: Request) {
   console.log("req here", req.body)
-  console.log("res here", res)
   const databaseVersion = await database.$queryRaw<
     DatabseVersionResult[]
   >`SHOW server_version`
@@ -54,7 +53,7 @@ export async function GET(req: Request, res) {
   )
 }
 
-export async function POST(req: Request, res) {
+export async function POST(req: Request) {
   console.log("req here", req.body)
   console.log("res here", req)
 
