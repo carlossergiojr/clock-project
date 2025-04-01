@@ -1,61 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { categorizarDespesa } from "@/deepseek/deepseek-api"
-import { database } from "@/infra/database"
 import { PrismaClient } from "@prisma/client"
-
-interface DatabseVersionResult {
-  server_version: string
-}
-
-interface MaxConnectionsResult {
-  max_connections: string
-}
-
-interface CountResult {
-  count: number
-}
-
-export async function GET() {
-  const databaseVersion = await database.$queryRaw<
-    DatabseVersionResult[]
-  >`SHOW server_version`
-  const updatedAt = new Date().toISOString()
-
-  const databaseMaxConnections = await database.$queryRaw<
-    MaxConnectionsResult[]
-  >`SHOW max_connections`
-
-  const databaseName = process.env.POSTGRES_DB
-
-  const databaseOpenedConnectionsResult = await database.$queryRaw<
-    CountResult[]
-  >`
-  SELECT count(*)::int as count
-  FROM pg_stat_activity
-  WHERE datname = ${databaseName};
-`
-
-  return new Response(
-    JSON.stringify({
-      updated_at: updatedAt,
-      dependencies: {
-        database: {
-          version: databaseVersion[0].server_version,
-          max_connections: Number(databaseMaxConnections[0].max_connections),
-          opened_connections: databaseOpenedConnectionsResult[0].count,
-        },
-      },
-    }),
-    {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  )
-}
+import twilio from "twilio"
 
 export async function POST(req: Request) {
+  const accountSid = process.env.ACCOUNTSID
+  const authToken = process.env.AUTHTOKEN
+
+  const client = twilio(accountSid, authToken)
   const formData = await req.formData()
   // const messageSid = formData.get("MessageSid")
   const from: any = formData.get("From")
@@ -71,8 +23,77 @@ export async function POST(req: Request) {
     body = await bodyValue.text()
   }
 
+  if (body === "saldo") {
+    const user = await prisma.user.findFirst({
+      where: {
+        phoneNumber: from,
+      },
+      include: {
+        Categories: {},
+      },
+    })
+
+    if (!user) {
+      client.messages.create({
+        from: "whatsapp:+14155238886",
+        to: from as string,
+        body: `Você não possui nenhuma despesa cadastrada`,
+      })
+    } else {
+      const transactions = await prisma.transaction.findMany({
+        where: {
+          userId: user.id,
+        },
+      })
+
+      let total = 0
+
+      transactions.forEach((transaction) => {
+        total += transaction.amount
+      })
+
+      client.messages.create({
+        from: "whatsapp:+14155238886",
+        to: from as string,
+        body: `Seu saldo atual é de R$ -${total}`,
+      })
+
+      return new Response(
+        JSON.stringify({
+          message: "top",
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+    }
+  }
+
   if (body) {
     const despeza = await categorizarDespesa(body)
+
+    if (despeza.valor === 0) {
+      client.messages.create({
+        from: "whatsapp:+14155238886",
+        to: from as string,
+        body: "Digite saldo para verificar o saldo atual",
+      })
+
+      return new Response(
+        JSON.stringify({
+          message: "top",
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+    }
 
     let user = await prisma.user.findFirst({
       where: {
@@ -118,6 +139,12 @@ export async function POST(req: Request) {
         userId: user.id,
         categoryId: category.id,
       },
+    })
+
+    client.messages.create({
+      from: "whatsapp:+14155238886",
+      to: from as string,
+      body: `Adicionado ${despeza.descricao} | R$:${despeza.valor}`,
     })
   }
 

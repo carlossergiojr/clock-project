@@ -43,6 +43,8 @@ export async function categorizarDespesa(
 
     const respostaIA = completion.choices[0].message.content
 
+    console.log("respostaIA", respostaIA)
+
     const jsonData = JSON.parse(respostaIA!.replace(/```json|```/g, "").trim())
 
     return { ...jsonData, originalMessage }
